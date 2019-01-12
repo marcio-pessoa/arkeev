@@ -1,0 +1,10 @@
+#
+# Arkeev - Backup Management
+#
+# Description: Job file sample (CSV format)
+#
+# Sintax:
+# name, hostname, protocol, tcp_port, path_to_backup, sudo, user, password, compression, destination
+#
+NetworkManager, uvvi, local, 0,/etc/NetworkManager/system-connections, 1, null, null, bzip2, /home/mex/Sync/Backup/uvvi
+etc, uvvi, local, 0,/etc/hosts, 1, null, null, bzip2, /home/mex/Sync/Backup/uvvi

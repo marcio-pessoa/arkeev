@@ -1,23 +1,17 @@
 #!/bin/bash
 #
-# Arkeev - Sciemon Backup Management
+# Arkeev - Backup Management
 #
 # Description: Arkeev program file
 #
 
-###############################################################################
-#
-# Variables
-#
-###############################################################################
-
 # Get program path
-PROGPATH=`echo $0 | /bin/sed -e 's,[\\/][^\\/][^\\/]*$,,'` 
+PROGPATH=`echo $0 | /bin/sed -e 's,[\\/][^\\/][^\\/]*$,,'`
 
 # Program information
 PROGNAME=arkeev
-PVERSION="0.004b-dev (2012-04-23)"
-DESCRIPT="Sciemon Backup Management"
+PVERSION="0.01 (2019-01-12)"
+DESCRIPT="Backup Management"
 PRPROMPT=$PROGNAME
 
 # Return states
@@ -48,13 +42,6 @@ JOB_COMPRESSION="bzip2"
 FILE_JOBS="jobs_new.csv"
 DIR_LOG="."
 
-
-###############################################################################
-#
-# Functions
-#
-###############################################################################
-
 help () {
 	echo -e "$DESCRIPT.
 
@@ -74,7 +61,7 @@ Examples:
   $PROGNAME -f jobs.csv -r
   $PROGNAME -d -f jobs.csv -l /tmp -i
 
-Report $PROGNAME bugs to dev@sciemon.com
+Report $PROGNAME bugs to marcio.pessoa@gmail.com
 \c"
 }
 
@@ -127,12 +114,12 @@ Available commands:
 
 version () {
 	echo -e "$PROGNAME $PVERSION
-Copyright (C) 2011 Sciemon Technologies.
+Copyright (C) 2011-2019 Marcio Pessoa.
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
 
-Written by Marcio Pessoa <marcio@pessoa.eti.br>.
+Written by Marcio Pessoa <marcio.pessoa@gmail.com>.
 \c"
 }
 
@@ -181,7 +168,7 @@ message () {
 	#
 	# Usage: message <priority> <text_message>
 	#
-	
+
 	case "$1" in
 		debug)
 		if [ $DEBUG -eq $TRUE ]
@@ -189,7 +176,7 @@ message () {
 			echo -e $2
 		fi
 		;;
-		
+
 		normal)
 		echo -e $2
 		;;
@@ -266,7 +253,7 @@ job_save () {
 
 	echo -e "$JOB_NAME, $JOB_HOSTNAME, $JOB_PROTO, $JOB_PORT,$JOB_SOURCE, $JOB_SUDO, $JOB_USER, $JOB_PASS, $JOB_COMPRESSION, $JOB_OUTDIR" \
 	>> $FILE_JOBS
-	
+
 	# Check status
 	if [ $? -eq 0 ]
 	then
@@ -279,7 +266,7 @@ job_save () {
 job_show () {
 	FILE_JOBS=$1
 	check_file $FILE_JOBS
-	
+
 	# Job counter
 	JOB_NUMBER=1
 
@@ -288,7 +275,7 @@ job_show () {
 	if [ $? -eq $OK ]
 	then
 		grep -v -e ^"#" $FILE_JOBS | tr -s "\n" | while read JOB_NAME JOB_HOSTNAME JOB_PROTO JOB_PORT JOB_SOURCE JOB_SUDO JOB_USER JOB_PASS JOB_COMPRESSION JOB_OUTDIR
-		do 
+		do
 
 		# Filter variables
 		JOB_NAME=$( AUX=$JOB_NAME; echo $AUX | tr -d " " )
@@ -308,7 +295,7 @@ job_show () {
 		let JOB_NUMBER=$JOB_NUMBER+1
 		done
 		echo
-		
+
 	else
 		message normal "No job file loaded.\n"
 	fi
@@ -322,7 +309,7 @@ job_summary () {
 	else
 		message normal ""
 	fi
-	
+
 	#
 	if [ $JOB_SUDO == $TRUE ];
 	then
@@ -330,9 +317,9 @@ job_summary () {
 	else
 		JOB_SUDO_STATUS="sudo disabled"
 	fi
-	
+
 	message normal "        Job name:\t$JOB_NAME
-        Host name:\t$JOB_HOSTNAME:$JOB_PORT ($JOB_PROTO) 
+        Host name:\t$JOB_HOSTNAME:$JOB_PORT ($JOB_PROTO)
         Source:\t\t$JOB_SOURCE
         Destination:\t$JOB_OUTDIR"
 	message debug "        User name:\t$JOB_USER ($JOB_SUDO_STATUS)
@@ -348,16 +335,16 @@ job_run () {
 	else
 		JOB_NUMBER=$1
 	fi
-	
+
 	#
 	echo
-	
+
 	# Job counter
 	JOB_COUNTER=0
-	
+
 	# Load jobs from file
 	grep -v -e ^"#" $FILE_JOBS | tr -s "\n" | while read JOB_NAME JOB_HOSTNAME JOB_PROTO JOB_PORT JOB_SOURCE JOB_SUDO JOB_USER JOB_PASS JOB_COMPRESSION JOB_OUTDIR
-	do 
+	do
 
 	# Filter variables
 	JOB_NAME=$( AUX=$JOB_NAME; echo $AUX | tr -d " " )
@@ -370,27 +357,27 @@ job_run () {
 	JOB_PASS=$( AUX=$JOB_PASS; echo $AUX | tr -d " " )
 	JOB_COMPRESSION=$( AUX=$JOB_COMPRESSION; echo $AUX | tr -d " " )
 	JOB_OUTDIR=$( AUX=$JOB_OUTDIR; echo $AUX | tr -d " " )
-	
+
 	# Increase job counter
 	let JOB_COUNTER=$JOB_COUNTER+1
-	
+
 	# Skip jobs not specified
 	if [ $JOB_NUMBER -ne $JOB_COUNTER -a $JOB_NUMBER -ne 0 ]
 	then
 		continue
 	fi
-	
+
 	# Start message
 	message normal "        Running job:\t$JOB_COUNTER"
 	message debug "        Job name:\t$JOB_NAME
-        Host name:\t$JOB_HOSTNAME ($JOB_PROTO) 
+        Host name:\t$JOB_HOSTNAME ($JOB_PROTO)
         Source:\t\t$JOB_SOURCE
         Destination:\t$JOB_OUTDIR
         Compression:\t$JOB_COMPRESSION"
 
 	# Backup process
 	job_archive $JOB_NAME $JOB_HOSTNAME $JOB_PROTO $JOB_PORT $JOB_SOURCE $JOB_SUDO $JOB_USER $JOB_PASS $JOB_COMPRESSION $JOB_OUTDIR
-	
+
 	#
 	if [ $? -eq $OK ]
 	then
@@ -408,18 +395,6 @@ job_run () {
 }
 
 job_archive () {
-	# 
-	#~ JOB_NAME=$1
-	#~ JOB_HOSTNAME=$2
-	#~ JOB_PROTO=$3
-	#~ JOB_PORT=$4
-	#~ JOB_SOURCE=$5
-	#~ JOB_SUDO=$6
-	#~ JOB_USER=$7
-	#~ JOB_PASS=$8
-	#~ JOB_COMPRESSION=$9
-	#~ JOB_OUTDIR="$10"
-	
 	# Check sudo status
 	if [ $JOB_SUDO -eq $TRUE ]
 	then
@@ -427,148 +402,148 @@ job_archive () {
 	else
 		JOB_SUDO_STATUS=""
 	fi
-	
+
 	# Set tar command arguments
 	TAR_ARGS="cf"
-	
+
 	# Set job compression algorithm
 	case "$JOB_COMPRESSION" in
-		
+
 		none)
 		TAR_ARGS=""$TAR_ARGS
 		JOB_FILE_EXT=""
 		;;
-	
+
 		gzip)
 		TAR_ARGS="z"$TAR_ARGS
 		JOB_FILE_EXT=".gz"
 		;;
-		
+
 		bzip2)
 		TAR_ARGS="j"$TAR_ARGS
 		JOB_FILE_EXT=".bz2"
 		;;
-	
+
 		*)
 		TAR_ARGS="j"$TAR_ARGS
 		JOB_FILE_EXT=".bz2"
 		;;
-			
+
 	esac
-	
-	# 
+
+	#
 	TIMESTAMP=$( date +%Y-%m-%d_%H-%M )
 	JOB_OUT_FILE=$JOB_HOSTNAME-$JOB_NAME\_-_$TIMESTAMP.tar$JOB_FILE_EXT
 	JOB_LOG_FILE=$JOB_HOSTNAME-$JOB_NAME\_-_$TIMESTAMP.log
-	
+
 	# Select protocol type
 	case "$JOB_PROTO" in
-	
+
 		local)
-			# 
+			#
 			export IFS=" "
-			# 
+			#
 			$JOB_SUDO_STATUS tar $TAR_ARGS $JOB_OUTDIR/$JOB_OUT_FILE $JOB_SOURCE \
 			    1>$DIR_LOG/$JOB_LOG_FILE 2>&1
 			RETVAL=$?
-			# 
+			#
 			export IFS=","
 			return $RETVAL
 		;;
-		
+
 		ssh)
-			# 
+			#
 			export IFS=" "
 			# Run compressor program
 			ssh -n -p $JOB_PORT $JOB_USER@$JOB_HOSTNAME "$JOB_SUDO_STATUS tar $TAR_ARGS /tmp/$JOB_OUT_FILE $JOB_SOURCE 1>$DIR_LOG/$JOB_LOG_FILE 2>&1"
 			RETVAL=$?
-			# 
+			#
 			export IFS=","
 			# Verify compression tool command
 			#~ if [ $RETVAL -ne 0 ]
 			#~ then
 				#~ return $CRITICAL
 			#~ fi
-			
+
 			# Copy job logs
 			scp -P $JOB_PORT $JOB_USER@$JOB_HOSTNAME:/tmp/$JOB_OUT_FILE $JOB_OUTDIR 1>$DIR_LOG/$JOB_LOG_FILE 2>&1
-			
+
 			# Copy tar (backup) file
 			scp -P $JOB_PORT $JOB_USER@$JOB_HOSTNAME:/tmp/$JOB_LOG_FILE $DIR_LOG 1>/dev/null 2>&1
-			
+
 			return $RETVAL
 		;;
-		
+
 		cifs)
 			message normal "        Sorry... Protocol not deployed yet."
 			#~ mount -r -t cifs $Device $ImptDir -o username=backup,password=aiWee6gu,codepage=850,iocharset=iso8859-1,umask=0
 			return $WARNING
 		;;
-		
+
 		*)
 			message normal "        Error: Invalid protocol."
 			return $CRITICAL
 		;;
-		
+
 	esac
 }
 
 cli () {
 	# CLI interpreter (Main menu)
 	while [ 1 ]; do
-		
+
 		echo -e  "$PRPROMPT> \c"
 		read USERINPUT
-		
+
 		INPUT1=`echo $USERINPUT | tr -s " " | cut -f 1 -d " "`
 		INPUT2=`echo $USERINPUT | tr -s " " | cut -f 2- -d " "`
-		
+
 		case "$INPUT1" in
-			
+
 			status)
 			status
 			;;
-			
+
 			new)
 			cli_newjob
 			;;
-			
+
 			load)
 			job_load_file $INPUT2
 			;;
-			
+
 			log)
 			job_log $INPUT2
 			;;
-			
+
 			jobs)
 			job_show $FILE_JOBS
 			;;
-			
+
 			run)
 				job_run $INPUT2
 			;;
-						
+
 			"" | " ")
 			;;
-			
+
 			help)
 			help_cli
 			;;
-			
+
 			version)
 			version
 			echo
 			;;
-			
+
 			clear)
 			clear
 			;;
-			
+
 			reset)
 			reset
 			;;
-			
+
 			debug)
 			if [ $DEBUG == $FALSE ];
 			then
@@ -579,17 +554,17 @@ cli () {
 				DEBUG=$FALSE
 			fi
 			;;
-			
+
 			quit | exit | bye)
 			message debug "Bye!\n"
 			exit $OK
 			;;
-			
+
 			*)
 			message normal "Unknown command.\n"
 			message debug "Type \"help\" to get some usage tips.\n"
 			;;
-			
+
 		esac
 
 done
@@ -602,30 +577,30 @@ cli_newjob () {
 	JOB_NUMBER=0
 
 	while [ 1 ]; do
-		
+
 		echo -e  "$PRPROMPT/$JOB_NAME> \c"
 		read USERINPUT
-		
+
 		INPUT1=`echo $USERINPUT | tr -s " " | cut -f 1 -d " "`
 		INPUT2=`echo $USERINPUT | tr -s " " | cut -f 2- -d " "`
-		
+
 		case "$INPUT1" in
-			
+
 		  name)
 			JOB_NAME=$INPUT2
 			message debug "Job name is set to: $JOB_NAME.\n"
 			;;
-			
+
 		  host)
 			JOB_HOSTNAME=$INPUT2
 			message debug "Host name is set to: $JOB_HOSTNAME.\n"
 			;;
-			
+
 		  protocol)
 			JOB_PROTO=$INPUT2
 			message debug "Protocol is set to: $JOB_PROTO.\n"
 			;;
-			
+
 		  port)
 			JOB_PORT=$INPUT2
 			message debug "TCP port is set to: $JOB_PORT.\n"
@@ -635,7 +610,7 @@ cli_newjob () {
 			JOB_SOURCE=$INPUT2
 			message debug "Source path is set to: $JOB_SOURCE.\n"
 			;;
-			
+
 		  sudo)
 			if [ $JOB_SUDO == $FALSE ];
 			then
@@ -646,61 +621,61 @@ cli_newjob () {
 				JOB_SUDO=$FALSE
 			fi
 			;;
-			
+
 		  user)
 			JOB_USER=$INPUT2
 			message debug "User name is set to: $JOB_USER.\n"
 			;;
-			
+
 		  pass)
 			JOB_PASS=$INPUT2
 			message debug "User password is set to: $JOB_PASS.\n"
 			;;
-			
+
 		  dest)
 			JOB_OUTDIR=$INPUT2
 			message debug "Destination directory is set to: $JOB_OUTDIR.\n"
 			;;
-			
+
 		  compression)
 			JOB_COMPRESSION=$INPUT2
 			message debug "Compression algorithm is set to: $JOB_COMPRESSION.\n"
 			;;
-			
+
 		  summary)
 			job_summary
 			echo
 			;;
-			
+
 		  save)
 			job_save $FILE_JOBS
 			;;
-			
+
 		  up | back)
 			PRPROMPT=$PROGNAME
 			return $OK
 			;;
-			
+
 			"" | " ")
 			;;
-			
+
 		  help)
 			help_cli_newjob
 			;;
-			
+
 		  version)
 			version
 			echo
 			;;
-			
+
 		  clear)
 			clear
 			;;
-			
+
 		  reset)
 			reset
 			;;
-			
+
 		  debug)
 			if [ $DEBUG == $FALSE ];
 			then
@@ -711,77 +686,69 @@ cli_newjob () {
 				DEBUG=$FALSE
 			fi
 			;;
-			
+
 		  quit | exit | bye)
 			message debug "Bye!\n"
 			exit $OK
 			;;
-			
+
 		  *)
 			message normal "Unknown command.\n"
 			;;
-			
+
 		esac
 
 	done
 }
 
-
-###############################################################################
-#
-# Input management
-#
-###############################################################################
-
-#~ while test -n "$1"
 while [ 1 ]
 do
-	
+
 	case "$1" in
-		
+
 		--file | -f)
 		shift
 		job_load_file $1
 		;;
-		
+
 		--log | -l)
 		shift
 		job_log $1
 		;;
-		
+
 		--debug | -d)
 		DEBUG=$TRUE
 		;;
-		
+
 		--cli | -i)
 		cli
 		;;
-		
+
 		--run | -r)
 		#~ shift
 		job_run 0
 		exit $?
 		;;
-		
+
 		--help | -h)
 		help
 		version
 		exit $OK
 		;;
-		
+
 		--version | -v)
 		version
 		exit $OK
 		;;
-		
+
 		*)
 		help
 		exit $UNKNOWN
 		;;
-		
+
 	esac
 	shift
-	
+
 done
 
 exit $UNKNOWN
